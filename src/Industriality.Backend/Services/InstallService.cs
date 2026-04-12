@@ -263,6 +263,11 @@ internal sealed class InstallService
         combinedClasspath.AddRange(loaderClasspath);
         foreach (var path in vanillaRuntime.ClasspathEntries)
         {
+            if (IsVanillaClientJar(path))
+            {
+                continue;
+            }
+
             if (!combinedClasspath.Contains(path, StringComparer.OrdinalIgnoreCase))
             {
                 combinedClasspath.Add(path);
@@ -704,6 +709,31 @@ internal sealed class InstallService
         }
 
         return result;
+    }
+
+    private bool IsVanillaClientJar(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        var expectedPath = Path.Combine(
+            _paths.VersionsDirectory,
+            _settings.MinecraftVersion,
+            _settings.MinecraftVersion + ".jar");
+
+        try
+        {
+            return string.Equals(
+                Path.GetFullPath(path),
+                Path.GetFullPath(expectedPath),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static string[] ExtractArguments(JsonElement root, string kind)

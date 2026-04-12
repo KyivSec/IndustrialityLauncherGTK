@@ -117,7 +117,7 @@ internal sealed class PlayService
                 var metadata = JsonSerializer.Deserialize(json, BackendJsonContext.Default.LauncherRuntimeMetadata);
                 if (metadata is not null && !string.IsNullOrWhiteSpace(metadata.MainClass) && metadata.ClasspathEntries.Length > 0)
                 {
-                    return metadata;
+                    return NormalizeRuntimeMetadataForLaunch(metadata);
                 }
             }
             catch
@@ -132,7 +132,7 @@ internal sealed class PlayService
                 "Could not resolve launch runtime metadata. Reinstall the modpack to regenerate runtime files.");
         }
 
-        return fallback;
+        return NormalizeRuntimeMetadataForLaunch(fallback);
     }
 
     private LauncherRuntimeMetadata? BuildRuntimeMetadataFromInstalledVersion(string versionId)
@@ -256,13 +256,18 @@ internal sealed class PlayService
             startInfo.ArgumentList.Add("-Djava.library.path=" + nativesDirectory);
         }
 
-        foreach (var argument in ResolveArguments(runtime.ExtraJvmArguments, tokenMap))
+        var resolvedJvmArguments = ResolveArguments(runtime.ExtraJvmArguments, tokenMap).ToArray();
+        foreach (var argument in resolvedJvmArguments)
         {
             startInfo.ArgumentList.Add(argument);
         }
 
-        startInfo.ArgumentList.Add("-cp");
-        startInfo.ArgumentList.Add(classpathText);
+        if (!HasClasspathFlag(resolvedJvmArguments))
+        {
+            startInfo.ArgumentList.Add("-cp");
+            startInfo.ArgumentList.Add(classpathText);
+        }
+
         startInfo.ArgumentList.Add(mainClass);
 
         var gameArguments = runtime.ExtraGameArguments.Length > 0
@@ -277,6 +282,96 @@ internal sealed class PlayService
         SetJavaEnvironment(startInfo, javaPath);
 
         return startInfo;
+    }
+
+    private LauncherRuntimeMetadata NormalizeRuntimeMetadataForLaunch(LauncherRuntimeMetadata runtime)
+    {
+        if (!IsNeoForgeRuntime(runtime))
+        {
+            return runtime;
+        }
+
+        var classpathEntries = runtime.ClasspathEntries
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .ToList();
+
+        var vanillaClientJarPath = Path.Combine(
+            _paths.VersionsDirectory,
+            _settings.MinecraftVersion,
+            _settings.MinecraftVersion + ".jar");
+
+        classpathEntries.RemoveAll(path => IsSamePath(path, vanillaClientJarPath));
+        classpathEntries.RemoveAll(IsInjectedNeoForgeJar);
+
+        runtime.ClasspathEntries = classpathEntries
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return runtime;
+    }
+
+    private static bool IsNeoForgeRuntime(LauncherRuntimeMetadata runtime)
+    {
+        if (!string.IsNullOrWhiteSpace(runtime.VersionId) &&
+            runtime.VersionId.Contains("neoforge", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return runtime.ExtraGameArguments.Any(argument =>
+            string.Equals(argument, "--fml.neoForgeVersion", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool HasClasspathFlag(IEnumerable<string> arguments)
+    {
+        foreach (var argument in arguments)
+        {
+            if (string.Equals(argument, "-cp", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(argument, "-classpath", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(argument, "--class-path", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsInjectedNeoForgeJar(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        var fileName = Path.GetFileName(path);
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return false;
+        }
+
+        return string.Equals(fileName, $"neoforge-{_settings.NeoForgeVersion}-client.jar", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(fileName, $"neoforge-{_settings.NeoForgeVersion}-universal.jar", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsSamePath(string left, string right)
+    {
+        if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+        {
+            return false;
+        }
+
+        try
+        {
+            return string.Equals(
+                Path.GetFullPath(left),
+                Path.GetFullPath(right),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private Dictionary<string, string> BuildTokenMap(
