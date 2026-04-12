@@ -10,16 +10,16 @@ public sealed class InstallProgressWindow : Window
 
     public InstallProgressWindow() : base("Installing")
     {
-        SetDefaultSize(480, 220);
+        SetDefaultSize(420, 160);
         Resizable = false;
         WindowPosition = WindowPosition.CenterOnParent;
 
-        var root = new Box(Orientation.Vertical, 12)
+        var root = new Box(Orientation.Vertical, 8)
         {
-            MarginTop = 20,
-            MarginBottom = 20,
-            MarginStart = 20,
-            MarginEnd = 20
+            MarginTop = 14,
+            MarginBottom = 14,
+            MarginStart = 14,
+            MarginEnd = 14
         };
 
         _stageLabel = new Label("Preparing...")
@@ -35,7 +35,11 @@ public sealed class InstallProgressWindow : Window
 
         _progressBar = new ProgressBar
         {
-            Fraction = 0d
+            Fraction = 0d,
+            WidthRequest = 360,
+            HeightRequest = 30,
+            ShowText = true,
+            Text = "0%"
         };
 
         root.PackStart(_stageLabel, false, false, 0);
@@ -53,9 +57,12 @@ public sealed class InstallProgressWindow : Window
         if (percent < 0)
         {
             _progressBar.Pulse();
+            _progressBar.Text = "Working...";
             return;
         }
 
-        _progressBar.Fraction = Math.Clamp(percent / 100d, 0d, 1d);
+        var clampedPercent = Math.Clamp(percent, 0d, 100d);
+        _progressBar.Fraction = clampedPercent / 100d;
+        _progressBar.Text = $"{Math.Round(clampedPercent):0}%";
     }
 }

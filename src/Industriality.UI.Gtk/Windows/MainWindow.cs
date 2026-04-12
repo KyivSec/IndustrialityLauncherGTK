@@ -1,7 +1,6 @@
 using Gtk;
 using Industriality.UI.Gtk.Abstractions;
 using Industriality.UI.Gtk.Styling;
-using Industriality.UI.Gtk.Widgets;
 
 namespace Industriality.UI.Gtk.Windows;
 
@@ -17,12 +16,13 @@ public sealed class MainWindow : Window
     {
         _actions = actions ?? throw new ArgumentNullException(nameof(actions));
 
-        SetDefaultSize(1100, 700);
+        SetDefaultSize(586, 350);
+        Resizable = false;
         WindowPosition = WindowPosition.Center;
 
         DeleteEvent += (_, args) =>
         {
-            args.RetVal = false;
+            args.RetVal = true;
             Application.Quit();
         };
 
@@ -53,12 +53,12 @@ public sealed class MainWindow : Window
         var navBar = new Box(Orientation.Horizontal, 0);
         navBar.StyleContext.AddClass("fusion-nav");
 
-        var panel = new Box(Orientation.Horizontal, 12);
+        var panel = new Box(Orientation.Horizontal, 8);
 
-        modpackButton = new Button("Modpack");
-        settingsButton = new Button("Settings");
-        modpackButton.WidthRequest = 240;
-        settingsButton.WidthRequest = 240;
+        modpackButton = BuildActionButton("Modpack", "play.svg");
+        settingsButton = BuildActionButton("Settings", "settings.svg");
+        modpackButton.WidthRequest = 120;
+        settingsButton.WidthRequest = 120;
 
         modpackButton.Clicked += (_, _) => Navigate("modpack");
         settingsButton.Clicked += (_, _) => Navigate("settings");
@@ -74,38 +74,24 @@ public sealed class MainWindow : Window
 
     private Widget BuildModpackPage()
     {
-        var root = new Box(Orientation.Vertical, 14);
-
-        var bannerCard = new Frame { ShadowType = ShadowType.None };
-        bannerCard.StyleContext.AddClass("fusion-banner-card");
-        bannerCard.HeightRequest = 430;
-        bannerCard.Hexpand = true;
-        bannerCard.Vexpand = true;
-
-        var bannerOverlay = new Overlay
+        var root = new Box(Orientation.Vertical, 8)
+        {
+            MarginTop = 8,
+            MarginBottom = 8,
+            MarginStart = 8,
+            MarginEnd = 8
+        };
+        var contentArea = new Box(Orientation.Vertical, 0)
         {
             Hexpand = true,
             Vexpand = true
         };
-        var backgroundImageWidget = BuildBannerImage();
 
-        if (backgroundImageWidget is not null)
+        var modpackHeader = new Box(Orientation.Vertical, 6)
         {
-            bannerOverlay.Add(backgroundImageWidget);
-        }
-        else
-        {
-            bannerOverlay.Add(new Box(Orientation.Vertical, 0));
-        }
-
-        var textOverlay = new Box(Orientation.Vertical, 6)
-        {
-            MarginTop = 20,
-            MarginBottom = 20,
-            MarginStart = 20,
-            MarginEnd = 20,
             Halign = Align.Start,
-            Valign = Align.End
+            Valign = Align.End,
+            MarginBottom = 10
         };
 
         var modpackName = new Label("Industriality")
@@ -119,26 +105,30 @@ public sealed class MainWindow : Window
             Xalign = 0
         };
 
-        var modpackInfo = new Label("GtkSharp fusion-style shell for modpack controls")
+        var modpackInfo = new Label("POLITICAL MODDED SMP | FACTORIES | GUNS | FACTIONS | AIRCRAFT")
         {
             Xalign = 0
         };
 
-        textOverlay.PackStart(modpackName, false, false, 0);
-        textOverlay.PackStart(modpackVersion, false, false, 0);
-        textOverlay.PackStart(modpackInfo, false, false, 0);
+        var launcherIcon = BuildSizedIcon("icon.png", 72);
+        if (launcherIcon is not null)
+        {
+            launcherIcon.Halign = Align.Start;
+            modpackHeader.PackStart(launcherIcon, false, false, 0);
+        }
 
-        bannerOverlay.AddOverlay(textOverlay);
-        bannerCard.Add(bannerOverlay);
-        root.PackStart(bannerCard, true, true, 0);
+        modpackHeader.PackStart(modpackName, false, false, 0);
+        modpackHeader.PackStart(modpackVersion, false, false, 0);
+        modpackHeader.PackStart(modpackInfo, false, false, 0);
+        contentArea.PackEnd(modpackHeader, false, false, 0);
+        root.PackStart(contentArea, true, true, 0);
 
-        var actionRow = new Box(Orientation.Horizontal, 10);
+        var actionRow = new Box(Orientation.Horizontal, 6);
         actionRow.StyleContext.AddClass("fusion-action-row");
 
         var installButton = BuildActionButton("Install", "install.svg");
         var playButton = BuildActionButton("Play", "play.svg");
         var updateButton = BuildActionButton("Update", "update.svg");
-        playButton.StyleContext.AddClass("play-action");
 
         installButton.Clicked += (_, _) => ShowProgressAndNotice(_actions.OnInstallRequested());
         playButton.Clicked += (_, _) => ShowInfo(_actions.OnPlayRequested());
@@ -154,16 +144,12 @@ public sealed class MainWindow : Window
 
     private Widget BuildSettingsPage()
     {
-        var scroll = new ScrolledWindow
-        {
-            HscrollbarPolicy = PolicyType.Never,
-            VscrollbarPolicy = PolicyType.Automatic
-        };
-
         var root = new Box(Orientation.Vertical, 16)
         {
             MarginTop = 8,
-            MarginBottom = 8
+            MarginBottom = 8,
+            MarginStart = 8,
+            MarginEnd = 8
         };
 
         var profileCard = BuildProfileCard();
@@ -173,10 +159,8 @@ public sealed class MainWindow : Window
         root.PackStart(profileCard, false, false, 0);
         root.PackStart(javaCard, false, false, 0);
         root.PackStart(actions, false, false, 0);
-        root.PackStart(new Label(string.Empty), true, true, 0);
 
-        scroll.Add(root);
-        return scroll;
+        return root;
     }
 
     private Widget BuildProfileCard()
@@ -186,17 +170,13 @@ public sealed class MainWindow : Window
 
         var content = new Box(Orientation.Vertical, 10)
         {
-            MarginTop = 14,
-            MarginBottom = 14,
-            MarginStart = 14,
-            MarginEnd = 14
+            MarginTop = 8,
+            MarginBottom = 8,
+            MarginStart = 8,
+            MarginEnd = 8
         };
 
-        var title = new Label("Profile Settings")
-        {
-            Xalign = 0
-        };
-        title.StyleContext.AddClass("fusion-section-title");
+        var title = BuildSectionTitle("Profile Settings", "account.svg");
 
         var grid = new Grid
         {
@@ -231,48 +211,36 @@ public sealed class MainWindow : Window
 
         var content = new Box(Orientation.Vertical, 10)
         {
-            MarginTop = 14,
-            MarginBottom = 14,
-            MarginStart = 14,
-            MarginEnd = 14
+            MarginTop = 8,
+            MarginBottom = 8,
+            MarginStart = 8,
+            MarginEnd = 8
         };
 
-        var title = new Label("Java Settings")
-        {
-            Xalign = 0
-        };
-        title.StyleContext.AddClass("fusion-section-title");
+        var title = BuildSectionTitle("Java Settings", "memory.svg");
 
         var grid = new Grid
         {
-            ColumnSpacing = 10,
-            RowSpacing = 10
+            ColumnSpacing = 6,
+            RowSpacing = 6
         };
 
         var minLabel = new Label("Minimum RAM (MB)")
         {
             Xalign = 0
         };
-        var minSpin = new SpinButton(512, 32768, 512)
-        {
-            Value = 512
-        };
-        minSpin.StyleContext.AddClass("fusion-input");
+        var minInput = BuildMemoryInput(initialValue: 512, minValue: 512, maxValue: 32768, step: 512);
 
         var maxLabel = new Label("Maximum RAM (MB)")
         {
             Xalign = 0
         };
-        var maxSpin = new SpinButton(1024, 65536, 512)
-        {
-            Value = 4096
-        };
-        maxSpin.StyleContext.AddClass("fusion-input");
+        var maxInput = BuildMemoryInput(initialValue: 4096, minValue: 1024, maxValue: 65536, step: 512);
 
         grid.Attach(minLabel, 0, 0, 1, 1);
-        grid.Attach(minSpin, 1, 0, 1, 1);
+        grid.Attach(minInput, 1, 0, 1, 1);
         grid.Attach(maxLabel, 0, 1, 1, 1);
-        grid.Attach(maxSpin, 1, 1, 1, 1);
+        grid.Attach(maxInput, 1, 1, 1, 1);
 
         content.PackStart(title, false, false, 0);
         content.PackStart(grid, false, false, 0);
@@ -283,11 +251,11 @@ public sealed class MainWindow : Window
 
     private Widget BuildSettingsActions()
     {
-        var row = new Box(Orientation.Horizontal, 10);
+        var row = new Box(Orientation.Horizontal, 6);
         row.StyleContext.AddClass("fusion-settings-actions");
 
-        var openFolder = new Button("Open Folder");
-        var deleteModpack = new Button("Delete Modpack");
+        var openFolder = BuildActionButton("Open Folder", "folder.svg");
+        var deleteModpack = BuildActionButton("Delete Modpack", "delete.svg");
 
         openFolder.Clicked += (_, _) => ShowInfo(_actions.OnOpenFolderRequested());
         deleteModpack.Clicked += (_, _) => ShowInfo(_actions.OnDeleteModpackRequested());
@@ -316,7 +284,7 @@ public sealed class MainWindow : Window
 
     private void ShowProgressAndNotice(string message)
     {
-        using var progressWindow = new InstallProgressWindow();
+        var progressWindow = new InstallProgressWindow();
         progressWindow.TransientFor = this;
         progressWindow.UpdateProgress("Placeholder", "Progress dialog shell only.", 35);
         progressWindow.ShowAll();
@@ -332,14 +300,20 @@ public sealed class MainWindow : Window
 
     private void ShowInfo(string message)
     {
-        using var dialog = new MessageDialog(
+        var dialog = new MessageDialog(
             this,
             DialogFlags.Modal,
             MessageType.Info,
             ButtonsType.Ok,
             message);
-        dialog.Run();
-        dialog.Destroy();
+        try
+        {
+            dialog.Run();
+        }
+        finally
+        {
+            dialog.Destroy();
+        }
     }
 
     private void TrySetWindowIcon()
@@ -357,32 +331,6 @@ public sealed class MainWindow : Window
         }
         catch
         {
-        }
-    }
-
-    private Widget? BuildBannerImage()
-    {
-        try
-        {
-            var backgroundPath = System.IO.Path.Combine(AssetsDirectoryPath, "background.png");
-            if (!File.Exists(backgroundPath))
-            {
-                return null;
-            }
-
-            var roundedImage = new RoundedImage(backgroundPath, cornerRadius: 10d, zoomFactor: 1.0d)
-            {
-                Hexpand = true,
-                Halign = Align.Fill,
-                Vexpand = true,
-                Valign = Align.Fill
-            };
-
-            return roundedImage;
-        }
-        catch
-        {
-            return null;
         }
     }
 
@@ -408,7 +356,106 @@ public sealed class MainWindow : Window
         return button;
     }
 
+    private Widget BuildMemoryInput(int initialValue, int minValue, int maxValue, int step)
+    {
+        var row = new Box(Orientation.Horizontal, 4);
+
+        var input = new Entry
+        {
+            WidthChars = 8,
+            Text = initialValue.ToString()
+        };
+        input.StyleContext.AddClass("fusion-input");
+        input.StyleContext.AddClass("fusion-memory-input");
+
+        var minusButton = BuildSquareIconButton("minus.svg");
+        var plusButton = BuildSquareIconButton("plus.svg");
+
+        var value = initialValue;
+
+        void SetValue(int candidate)
+        {
+            value = Math.Clamp(candidate, minValue, maxValue);
+            input.Text = value.ToString();
+        }
+
+        void CommitTypedValue()
+        {
+            if (int.TryParse(input.Text, out var parsed))
+            {
+                SetValue(parsed);
+                return;
+            }
+
+            SetValue(value);
+        }
+
+        minusButton.Clicked += (_, _) => SetValue(value - step);
+        plusButton.Clicked += (_, _) => SetValue(value + step);
+        input.FocusOutEvent += (_, _) =>
+        {
+            CommitTypedValue();
+        };
+        input.Activated += (_, _) => CommitTypedValue();
+
+        row.PackStart(input, false, false, 0);
+        row.PackStart(plusButton, false, false, 0);
+        row.PackStart(minusButton, false, false, 0);
+
+        return row;
+    }
+
+    private Button BuildSquareIconButton(string iconFileName)
+    {
+        var button = new Button
+        {
+            WidthRequest = 26,
+            HeightRequest = 26
+        };
+        button.StyleContext.AddClass("fusion-step-button");
+
+        var icon = BuildInlineIcon(iconFileName);
+        if (icon is not null)
+        {
+            button.Add(icon);
+        }
+        else
+        {
+            button.Add(new Label("?"));
+        }
+
+        return button;
+    }
+
+    private Widget BuildSectionTitle(string text, string iconFileName)
+    {
+        var titleRow = new Box(Orientation.Horizontal, 6)
+        {
+            Halign = Align.Start
+        };
+
+        var icon = BuildInlineIcon(iconFileName);
+        if (icon is not null)
+        {
+            titleRow.PackStart(icon, false, false, 0);
+        }
+
+        var label = new Label(text)
+        {
+            Xalign = 0
+        };
+        label.StyleContext.AddClass("fusion-section-title");
+        titleRow.PackStart(label, false, false, 0);
+
+        return titleRow;
+    }
+
     private Image? BuildInlineIcon(string iconFileName)
+    {
+        return BuildSizedIcon(iconFileName, 16);
+    }
+
+    private Image? BuildSizedIcon(string iconFileName, int size)
     {
         try
         {
@@ -419,9 +466,9 @@ public sealed class MainWindow : Window
             }
 
             var source = new Gdk.Pixbuf(iconPath);
-            var iconPixbuf = source.Width == 16 && source.Height == 16
+            var iconPixbuf = source.Width == size && source.Height == size
                 ? source
-                : source.ScaleSimple(16, 16, Gdk.InterpType.Bilinear) ?? source;
+                : source.ScaleSimple(size, size, Gdk.InterpType.Bilinear) ?? source;
 
             if (!ReferenceEquals(source, iconPixbuf))
             {
