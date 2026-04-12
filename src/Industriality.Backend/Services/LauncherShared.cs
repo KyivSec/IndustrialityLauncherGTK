@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using Industriality.Backend.Models;
 
 namespace Industriality.Backend.Services;
@@ -22,72 +20,6 @@ internal static class LauncherShared
         client.DefaultRequestHeaders.UserAgent.ParseAdd("IndustrialityLauncher/2.0");
         client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
         return client;
-    }
-
-    public static void SetPropertyIfExists(
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type targetType,
-        object target,
-        string propertyName,
-        object? value)
-    {
-        if (value is null)
-        {
-            return;
-        }
-
-        var property = targetType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
-        if (property is null || !property.CanWrite)
-        {
-            return;
-        }
-
-        if (property.PropertyType.IsAssignableFrom(value.GetType()))
-        {
-            property.SetValue(target, value);
-        }
-    }
-
-    public static void ApplyJvmMemoryArgumentsIfPossible<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TLaunchOption>(
-        TLaunchOption launchOption,
-        int minRamMb,
-        int maxRamMb)
-        where TLaunchOption : class
-    {
-        var launchOptionType = launchOption.GetType();
-        var arguments = new[]
-        {
-            $"-Xms{minRamMb}m",
-            $"-Xmx{maxRamMb}m"
-        };
-
-        var property = launchOptionType.GetProperty("JvmArguments", BindingFlags.Public | BindingFlags.Instance)
-            ?? launchOptionType.GetProperty("GameJvmArguments", BindingFlags.Public | BindingFlags.Instance)
-            ?? launchOptionType.GetProperty("AdditionalJvmArguments", BindingFlags.Public | BindingFlags.Instance);
-
-        if (property is null || !property.CanWrite)
-        {
-            return;
-        }
-
-        if (property.PropertyType == typeof(string[]))
-        {
-            var existing = property.GetValue(launchOption) as string[] ?? Array.Empty<string>();
-            property.SetValue(launchOption, existing.Concat(arguments).Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
-            return;
-        }
-
-        if (typeof(IList<string>).IsAssignableFrom(property.PropertyType) &&
-            property.GetValue(launchOption) is IList<string> list)
-        {
-            foreach (var argument in arguments)
-            {
-                if (!list.Contains(argument, StringComparer.OrdinalIgnoreCase))
-                {
-                    list.Add(argument);
-                }
-            }
-        }
     }
 
     public static void OpenFolderCrossPlatform(string directoryPath)

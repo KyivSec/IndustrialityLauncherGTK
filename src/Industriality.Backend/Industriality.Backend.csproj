@@ -2,8 +2,4 @@
   <PropertyGroup>
     <RootNamespace>Industriality.Backend</RootNamespace>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="CmlLib.Core" />
-    <PackageReference Include="CmlLib.Core.Installer.NeoForge" />
-  </ItemGroup>
 </Project>

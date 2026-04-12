@@ -6,7 +6,7 @@ public static class VersionResolver
 {
     public static string? TryResolveInstalledVersionIdFromDisk(LauncherSettings settings, LauncherPaths paths)
     {
-        var versionsDirectory = Path.Combine(paths.GameDirectory, "versions");
+        var versionsDirectory = paths.VersionsDirectory;
         if (!Directory.Exists(versionsDirectory))
         {
             return null;
@@ -28,6 +28,41 @@ public static class VersionResolver
             {
                 return versionId;
             }
+        }
+
+        var fallback = Directory
+            .EnumerateFiles(versionsDirectory, "*.json", SearchOption.AllDirectories)
+            .Select(filePath =>
+            {
+                var id = Path.GetFileNameWithoutExtension(filePath);
+                var score = 0;
+
+                if (id.Contains("neoforge", StringComparison.OrdinalIgnoreCase))
+                {
+                    score += 100;
+                }
+
+                if (id.Contains(settings.NeoForgeVersion, StringComparison.OrdinalIgnoreCase))
+                {
+                    score += 10;
+                }
+
+                return new
+                {
+                    Id = id,
+                    Score = score,
+                    LastWrite = File.GetLastWriteTimeUtc(filePath)
+                };
+            })
+            .Where(item => item.Score > 0)
+            .OrderByDescending(item => item.Score)
+            .ThenByDescending(item => item.LastWrite)
+            .Select(item => item.Id)
+            .FirstOrDefault();
+
+        if (!string.IsNullOrWhiteSpace(fallback))
+        {
+            return fallback;
         }
 
         return null;

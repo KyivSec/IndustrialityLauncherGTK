@@ -29,6 +29,16 @@ public sealed class LauncherPaths
                 $"jdk-{_settings.JavaFeatureVersion.ToString(CultureInfo.InvariantCulture)}.{extension}");
         }
     }
+    public string VersionsDirectory => Path.Combine(GameDirectory, "versions");
+    public string LibrariesDirectory => Path.Combine(GameDirectory, "libraries");
+    public string AssetsDirectory => Path.Combine(GameDirectory, "assets");
+    public string AssetIndexesDirectory => Path.Combine(AssetsDirectory, "indexes");
+    public string AssetObjectsDirectory => Path.Combine(AssetsDirectory, "objects");
+    public string NativesDirectory => Path.Combine(GameDirectory, "natives");
+    public string RuntimeMetadataPath => Path.Combine(GameDirectory, ".industriality", "runtime.json");
+    public string NeoForgeInstallerPath => Path.Combine(
+        RuntimeDirectory,
+        $"neoforge-{_settings.NeoForgeVersion}-installer.jar");
 
     public string SettingsFilePath => Path.Combine(RootDirectory, "launcher-settings.json");
     public string ModpackZipPath => Path.Combine(RootDirectory, "Industriality.NeoForge.zip");
