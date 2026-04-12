@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Industriality.Backend.Models;
 
@@ -23,7 +24,11 @@ internal static class LauncherShared
         return client;
     }
 
-    public static void SetPropertyIfExists(Type targetType, object target, string propertyName, object? value)
+    public static void SetPropertyIfExists(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type targetType,
+        object target,
+        string propertyName,
+        object? value)
     {
         if (value is null)
         {
@@ -42,7 +47,12 @@ internal static class LauncherShared
         }
     }
 
-    public static void ApplyJvmMemoryArgumentsIfPossible(object launchOption, int minRamMb, int maxRamMb)
+    public static void ApplyJvmMemoryArgumentsIfPossible<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TLaunchOption>(
+        TLaunchOption launchOption,
+        int minRamMb,
+        int maxRamMb)
+        where TLaunchOption : class
     {
         var launchOptionType = launchOption.GetType();
         var arguments = new[]

@@ -36,14 +36,9 @@ public static class LauncherPathDefaults
 
         if (osPlatform == OSPlatform.OSX)
         {
-            return Path.Combine(userProfile, "Library", "Application Support", "IndustrialityLauncher");
+            return Path.GetFullPath(AppContext.BaseDirectory);
         }
 
-        if (!string.IsNullOrWhiteSpace(xdgDataHome))
-        {
-            return Path.Combine(xdgDataHome, "IndustrialityLauncher");
-        }
-
-        return Path.Combine(userProfile, ".local", "share", "IndustrialityLauncher");
+        return "/usr/bin/IndustrialityLauncher";
     }
 }

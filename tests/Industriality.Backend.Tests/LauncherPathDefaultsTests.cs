@@ -20,7 +20,7 @@ public sealed class LauncherPathDefaultsTests
     }
 
     [Fact]
-    public void GetDefaultRootDirectory_ForMac_UsesLibraryApplicationSupport()
+    public void GetDefaultRootDirectory_ForMac_UsesApplicationBaseDirectory()
     {
         var result = LauncherPathDefaults.GetDefaultRootDirectory(
             OSPlatform.OSX,
@@ -28,13 +28,11 @@ public sealed class LauncherPathDefaultsTests
             applicationData: "/unused",
             xdgDataHome: null);
 
-        Assert.Equal(
-            "/Users/admin/Library/Application Support/IndustrialityLauncher",
-            NormalizePathSeparators(result));
+        Assert.Equal(NormalizePathSeparators(Path.GetFullPath(AppContext.BaseDirectory)), NormalizePathSeparators(result));
     }
 
     [Fact]
-    public void GetDefaultRootDirectory_ForLinuxPrefersXdgDataHome()
+    public void GetDefaultRootDirectory_ForLinux_UsesUsrBin()
     {
         var result = LauncherPathDefaults.GetDefaultRootDirectory(
             OSPlatform.Linux,
@@ -42,19 +40,7 @@ public sealed class LauncherPathDefaultsTests
             applicationData: "/unused",
             xdgDataHome: "/home/admin/.xdg-data");
 
-        Assert.Equal("/home/admin/.xdg-data/IndustrialityLauncher", NormalizePathSeparators(result));
-    }
-
-    [Fact]
-    public void GetDefaultRootDirectory_ForLinuxFallsBackToLocalShare()
-    {
-        var result = LauncherPathDefaults.GetDefaultRootDirectory(
-            OSPlatform.Linux,
-            userProfile: "/home/admin",
-            applicationData: "/unused",
-            xdgDataHome: null);
-
-        Assert.Equal("/home/admin/.local/share/IndustrialityLauncher", NormalizePathSeparators(result));
+        Assert.Equal("/usr/bin/IndustrialityLauncher", NormalizePathSeparators(result));
     }
 
     private static string NormalizePathSeparators(string value)

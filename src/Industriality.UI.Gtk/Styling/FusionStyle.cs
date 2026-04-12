@@ -209,5 +209,47 @@ scrollbar slider:active {
     background-color: #4f8fd3;
     border-color: #5ea0e6;
 }
+
+progressbar,
+progressbar trough,
+progressbar progress {
+    min-height: 28px;
+}
+
+progressbar trough {
+    background-color: #2c3035;
+    border: 1px solid #606870;
+    border-top-color: #6a7179;
+    border-bottom-color: #515860;
+    border-left-color: #60676f;
+    border-right-color: #60676f;
+    border-radius: 3px;
+}
+
+progressbar progress {
+    background-color: #4f8fd3;
+    border-top: 1px solid rgba(255, 255, 255, 0.35);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.18);
+    border-radius: 3px;
+}
+
+progressbar text {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.fusion-progress-text {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.fusion-popup,
+.fusion-popup dialog,
+.fusion-popup-body,
+.fusion-popup-body box,
+.fusion-popup-body label {
+    background-color: #2a2d31;
+    color: #d7d9db;
+}
 """;
 }

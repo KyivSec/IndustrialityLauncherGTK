@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using Industriality.Backend.Abstractions;
 using Industriality.Backend.Models;
+using Industriality.Backend.Serialization;
 
 namespace Industriality.Backend.Services;
 
@@ -99,6 +100,12 @@ public sealed class ModpackService : IModpackService
         }
 
         File.WriteAllText(_paths.ModpackVersionFilePath, installedVersion);
+
+        if (File.Exists(_paths.ModpackZipPath))
+        {
+            File.Delete(_paths.ModpackZipPath);
+        }
+
         LauncherShared.ReportProgress(progress, "Modpack", "Modpack installed.", 98);
     }
 
@@ -167,7 +174,7 @@ public sealed class ModpackService : IModpackService
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        var releaseInfo = JsonSerializer.Deserialize<GitHubReleaseInfo>(json);
+        var releaseInfo = JsonSerializer.Deserialize(json, BackendJsonContext.Default.GitHubReleaseInfo);
         if (releaseInfo is null || string.IsNullOrWhiteSpace(releaseInfo.TagName))
         {
             throw new InvalidOperationException("Could not resolve latest modpack version from GitHub.");

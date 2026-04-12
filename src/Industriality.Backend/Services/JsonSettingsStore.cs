@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Industriality.Backend.Abstractions;
 using Industriality.Backend.Models;
+using Industriality.Backend.Serialization;
 
 namespace Industriality.Backend.Services;
 
@@ -8,8 +9,11 @@ public sealed class JsonSettingsStore : ISettingsStore
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
-        WriteIndented = true
+        WriteIndented = true,
+        TypeInfoResolver = BackendJsonContext.Default
     };
+
+    private static readonly BackendJsonContext SerializerContext = new(SerializerOptions);
 
     public async Task<UiSettings> LoadAsync(string filePath, CancellationToken cancellationToken = default)
     {
@@ -21,7 +25,7 @@ public sealed class JsonSettingsStore : ISettingsStore
         try
         {
             var json = await File.ReadAllTextAsync(filePath, cancellationToken).ConfigureAwait(false);
-            var result = JsonSerializer.Deserialize<UiSettings>(json, SerializerOptions);
+            var result = JsonSerializer.Deserialize(json, BackendJsonContext.Default.UiSettings);
             return result ?? new UiSettings();
         }
         catch
@@ -55,7 +59,7 @@ public sealed class JsonSettingsStore : ISettingsStore
             Directory.CreateDirectory(directory);
         }
 
-        var json = JsonSerializer.Serialize(normalized, SerializerOptions);
+        var json = JsonSerializer.Serialize(normalized, SerializerContext.UiSettings);
         await File.WriteAllTextAsync(filePath, json, cancellationToken).ConfigureAwait(false);
     }
 }

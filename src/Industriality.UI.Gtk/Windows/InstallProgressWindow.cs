@@ -7,6 +7,7 @@ public sealed class InstallProgressWindow : Window
     private readonly Label _stageLabel;
     private readonly Label _messageLabel;
     private readonly ProgressBar _progressBar;
+    private readonly Label _progressTextLabel;
 
     public InstallProgressWindow() : base("Installing")
     {
@@ -37,14 +38,23 @@ public sealed class InstallProgressWindow : Window
         {
             Fraction = 0d,
             WidthRequest = 360,
-            HeightRequest = 30,
-            ShowText = true,
-            Text = "0%"
+            ShowText = false
         };
+
+        _progressTextLabel = new Label("0%")
+        {
+            Halign = Align.Center,
+            Valign = Align.Center
+        };
+        _progressTextLabel.StyleContext.AddClass("fusion-progress-text");
+
+        var progressOverlay = new Overlay();
+        progressOverlay.Add(_progressBar);
+        progressOverlay.AddOverlay(_progressTextLabel);
 
         root.PackStart(_stageLabel, false, false, 0);
         root.PackStart(_messageLabel, false, false, 0);
-        root.PackStart(_progressBar, false, false, 0);
+        root.PackStart(progressOverlay, false, false, 0);
 
         Add(root);
     }
@@ -57,12 +67,12 @@ public sealed class InstallProgressWindow : Window
         if (percent < 0)
         {
             _progressBar.Pulse();
-            _progressBar.Text = "Working...";
+            _progressTextLabel.Text = "Working...";
             return;
         }
 
         var clampedPercent = Math.Clamp(percent, 0d, 100d);
         _progressBar.Fraction = clampedPercent / 100d;
-        _progressBar.Text = $"{Math.Round(clampedPercent):0}%";
+        _progressTextLabel.Text = $"{Math.Round(clampedPercent):0}%";
     }
 }

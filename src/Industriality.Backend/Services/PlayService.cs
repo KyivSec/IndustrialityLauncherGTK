@@ -12,6 +12,8 @@ internal sealed class PlayService
     private LauncherSettings _settings;
     private readonly LauncherPaths _paths;
     private readonly IJavaRuntimeResolver _javaRuntimeResolver;
+    private readonly object _processSync = new();
+    private Process? _runningProcess;
 
     public PlayService(LauncherSettings settings, LauncherPaths paths, IJavaRuntimeResolver javaRuntimeResolver)
     {
@@ -27,6 +29,11 @@ internal sealed class PlayService
 
     public async Task PlayAsync(string versionId, CancellationToken cancellationToken)
     {
+        if (IsGameRunning())
+        {
+            return;
+        }
+
         var javaPath = await _javaRuntimeResolver.ResolveJavaExecutablePathAsync(
             progress: null,
             cancellationToken).ConfigureAwait(false);
@@ -48,12 +55,68 @@ internal sealed class PlayService
             ?? throw new InvalidOperationException("CmlLib returned null from BuildProcessAsync.");
 
         var startInfo = ExtractStartInfo(processObject, javaPath);
-        using var process = new Process { StartInfo = startInfo };
+        var process = new Process
+        {
+            StartInfo = startInfo,
+            EnableRaisingEvents = true
+        };
+        process.Exited += (_, _) =>
+        {
+            lock (_processSync)
+            {
+                if (ReferenceEquals(_runningProcess, process))
+                {
+                    _runningProcess = null;
+                }
+            }
+
+            process.Dispose();
+        };
 
         if (!process.Start())
         {
+            process.Dispose();
             throw new InvalidOperationException("Minecraft process failed to start.");
         }
+
+        lock (_processSync)
+        {
+            _runningProcess = process;
+        }
+    }
+
+    public bool IsGameRunning()
+    {
+        lock (_processSync)
+        {
+            return _runningProcess is { HasExited: false };
+        }
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        Process? process;
+
+        lock (_processSync)
+        {
+            process = _runningProcess;
+            _runningProcess = null;
+        }
+
+        if (process is null || process.HasExited)
+        {
+            return Task.CompletedTask;
+        }
+
+        try
+        {
+            process.Kill(entireProcessTree: true);
+        }
+        catch
+        {
+        }
+
+        return Task.CompletedTask;
     }
 
     private ProcessStartInfo ExtractStartInfo(object processObject, string javaPath)

@@ -1,7 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <RootNamespace>Industriality.UI.Gtk</RootNamespace>
+    <AssemblyName>IndustrialityLauncher</AssemblyName>
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Industriality.Backend\Industriality.Backend.csproj" />
@@ -11,8 +25,12 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Assets\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="Assets\**\*" />
+    <TrimmerRootAssembly Include="GtkSharp" />
+    <TrimmerRootAssembly Include="GdkSharp" />
+    <TrimmerRootAssembly Include="GLibSharp" />
+    <TrimmerRootAssembly Include="PangoSharp" />
+    <TrimmerRootAssembly Include="CairoSharp" />
+    <TrimmerRootAssembly Include="AtkSharp" />
   </ItemGroup>
 </Project>

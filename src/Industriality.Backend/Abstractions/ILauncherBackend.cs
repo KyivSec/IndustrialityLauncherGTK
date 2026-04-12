@@ -23,6 +23,8 @@ public interface ILauncherBackend
         IProgress<LauncherProgress>? progress = null,
         CancellationToken cancellationToken = default);
     Task PlayAsync(CancellationToken cancellationToken = default);
+    bool IsGameRunning();
+    Task StopAsync(CancellationToken cancellationToken = default);
     void OpenRootFolder();
     void DeleteModpack();
     Task<ModpackUpdateInfo> GetModpackUpdateInfoAsync(CancellationToken cancellationToken = default);

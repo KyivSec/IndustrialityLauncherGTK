@@ -140,6 +140,16 @@ public sealed class LauncherBackend : ILauncherBackend
         await _playService.PlayAsync(versionId, cancellationToken).ConfigureAwait(false);
     }
 
+    public bool IsGameRunning()
+    {
+        return _playService.IsGameRunning();
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        return _playService.StopAsync(cancellationToken);
+    }
+
     public void OpenRootFolder()
     {
         _paths.EnsureDirectories();
