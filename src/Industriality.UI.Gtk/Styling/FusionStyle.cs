@@ -30,7 +30,7 @@ window {
 
 .fusion-nav {
     background-color: #25292d;
-    border-right: 1px solid #1e2126;
+    border-bottom: 1px solid #1e2126;
     padding: 12px;
 }
 
@@ -83,14 +83,27 @@ window {
     border-color: #6a879f;
 }
 
-.fusion-action-row button.secondary {
-    background-color: #4e3f53;
-    border-color: #6d5774;
+.fusion-action-row button.play-action {
+    background-color: #2f7a3f;
+    border-color: #3ea655;
 }
 
-.fusion-action-row button.secondary:hover {
-    background-color: #63526b;
-    border-color: #846f8c;
+.fusion-action-row button.play-action:hover {
+    background-color: #3a944e;
+    border-color: #53b96a;
+}
+
+.fusion-banner-card {
+    background-color: #32383f;
+    border: 1px solid #434b53;
+    border-radius: 10px;
+    padding: 0;
+}
+
+spinbutton button,
+spinbutton button.up,
+spinbutton button.down {
+    color: #ffffff;
 }
 
 .fusion-settings-actions button {

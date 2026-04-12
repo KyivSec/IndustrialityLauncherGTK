@@ -32,11 +32,8 @@ public sealed class MainWindow : Window
         var root = new Box(Orientation.Vertical, 0);
         Add(root);
 
-        var body = new Box(Orientation.Horizontal, 0);
-        root.PackStart(body, true, true, 0);
-
         var navigationPanel = BuildNavigationPanel(out _modpackNavButton, out _settingsNavButton);
-        body.PackStart(navigationPanel, false, false, 0);
+        root.PackStart(navigationPanel, false, false, 0);
 
         _contentStack = new Stack
         {
@@ -46,30 +43,33 @@ public sealed class MainWindow : Window
         _contentStack.AddNamed(BuildModpackPage(), "modpack");
         _contentStack.AddNamed(BuildSettingsPage(), "settings");
 
-        body.PackStart(_contentStack, true, true, 0);
+        root.PackStart(_contentStack, true, true, 0);
 
         Navigate("modpack");
     }
 
     private Widget BuildNavigationPanel(out Button modpackButton, out Button settingsButton)
     {
-        var panel = new Box(Orientation.Vertical, 8)
-        {
-            WidthRequest = 200
-        };
-        panel.StyleContext.AddClass("fusion-nav");
+        var navBar = new Box(Orientation.Horizontal, 0);
+        navBar.StyleContext.AddClass("fusion-nav");
+
+        var panel = new Box(Orientation.Horizontal, 12);
 
         modpackButton = new Button("Modpack");
         settingsButton = new Button("Settings");
+        modpackButton.WidthRequest = 240;
+        settingsButton.WidthRequest = 240;
 
         modpackButton.Clicked += (_, _) => Navigate("modpack");
         settingsButton.Clicked += (_, _) => Navigate("settings");
 
         panel.PackStart(modpackButton, false, false, 0);
         panel.PackStart(settingsButton, false, false, 0);
-        panel.PackStart(new Label(string.Empty), true, true, 0);
+        navBar.PackStart(new Label(string.Empty), true, true, 0);
+        navBar.PackStart(panel, false, false, 0);
+        navBar.PackStart(new Label(string.Empty), true, true, 0);
 
-        return panel;
+        return navBar;
     }
 
     private Widget BuildModpackPage()
@@ -77,17 +77,36 @@ public sealed class MainWindow : Window
         var root = new Box(Orientation.Vertical, 14);
 
         var bannerCard = new Frame { ShadowType = ShadowType.None };
-        bannerCard.StyleContext.AddClass("fusion-card");
+        bannerCard.StyleContext.AddClass("fusion-banner-card");
         bannerCard.HeightRequest = 430;
+        bannerCard.Hexpand = true;
+        bannerCard.Vexpand = true;
 
-        var bannerLayout = new Box(Orientation.Vertical, 8)
+        var bannerOverlay = new Overlay
+        {
+            Hexpand = true,
+            Vexpand = true
+        };
+        var backgroundImageWidget = BuildBannerImage();
+
+        if (backgroundImageWidget is not null)
+        {
+            bannerOverlay.Add(backgroundImageWidget);
+        }
+        else
+        {
+            bannerOverlay.Add(new Box(Orientation.Vertical, 0));
+        }
+
+        var textOverlay = new Box(Orientation.Vertical, 6)
         {
             MarginTop = 20,
             MarginBottom = 20,
             MarginStart = 20,
-            MarginEnd = 20
+            MarginEnd = 20,
+            Halign = Align.Start,
+            Valign = Align.End
         };
-        var backgroundImageWidget = BuildBannerImage();
 
         var modpackName = new Label("Industriality")
         {
@@ -105,25 +124,21 @@ public sealed class MainWindow : Window
             Xalign = 0
         };
 
-        if (backgroundImageWidget is not null)
-        {
-            bannerLayout.PackStart(backgroundImageWidget, false, false, 0);
-        }
+        textOverlay.PackStart(modpackName, false, false, 0);
+        textOverlay.PackStart(modpackVersion, false, false, 0);
+        textOverlay.PackStart(modpackInfo, false, false, 0);
 
-        bannerLayout.PackEnd(modpackInfo, false, false, 0);
-        bannerLayout.PackEnd(modpackVersion, false, false, 0);
-        bannerLayout.PackEnd(modpackName, false, false, 0);
-
-        bannerCard.Add(bannerLayout);
+        bannerOverlay.AddOverlay(textOverlay);
+        bannerCard.Add(bannerOverlay);
         root.PackStart(bannerCard, true, true, 0);
 
         var actionRow = new Box(Orientation.Horizontal, 10);
         actionRow.StyleContext.AddClass("fusion-action-row");
 
-        var installButton = new Button("Install");
-        var playButton = new Button("Play");
-        var updateButton = new Button("Update");
-        updateButton.StyleContext.AddClass("secondary");
+        var installButton = BuildActionButton("Install", "install.svg");
+        var playButton = BuildActionButton("Play", "play.svg");
+        var updateButton = BuildActionButton("Update", "update.svg");
+        playButton.StyleContext.AddClass("play-action");
 
         installButton.Clicked += (_, _) => ShowProgressAndNotice(_actions.OnInstallRequested());
         playButton.Clicked += (_, _) => ShowInfo(_actions.OnPlayRequested());
@@ -355,15 +370,65 @@ public sealed class MainWindow : Window
                 return null;
             }
 
-            var roundedImage = new RoundedImage(backgroundPath, cornerRadius: 18d, zoomFactor: 1.2d)
+            var roundedImage = new RoundedImage(backgroundPath, cornerRadius: 10d, zoomFactor: 1.0d)
             {
-                HeightRequest = 280,
                 Hexpand = true,
                 Halign = Align.Fill,
-                Valign = Align.Start
+                Vexpand = true,
+                Valign = Align.Fill
             };
 
             return roundedImage;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private Button BuildActionButton(string text, string iconFileName)
+    {
+        var button = new Button();
+
+        var content = new Box(Orientation.Horizontal, 8)
+        {
+            Halign = Align.Center,
+            Valign = Align.Center
+        };
+
+        var icon = BuildInlineIcon(iconFileName);
+        if (icon is not null)
+        {
+            content.PackStart(icon, false, false, 0);
+        }
+
+        content.PackStart(new Label(text), false, false, 0);
+        button.Add(content);
+
+        return button;
+    }
+
+    private Image? BuildInlineIcon(string iconFileName)
+    {
+        try
+        {
+            var iconPath = System.IO.Path.Combine(AssetsDirectoryPath, iconFileName);
+            if (!File.Exists(iconPath))
+            {
+                return null;
+            }
+
+            var source = new Gdk.Pixbuf(iconPath);
+            var iconPixbuf = source.Width == 16 && source.Height == 16
+                ? source
+                : source.ScaleSimple(16, 16, Gdk.InterpType.Bilinear) ?? source;
+
+            if (!ReferenceEquals(source, iconPixbuf))
+            {
+                source.Dispose();
+            }
+
+            return new Image(iconPixbuf);
         }
         catch
         {
