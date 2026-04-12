@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Industriality.Backend</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CmlLib.Core" />
+    <PackageReference Include="CmlLib.Core.Installer.NeoForge" />
+  </ItemGroup>
+</Project>
