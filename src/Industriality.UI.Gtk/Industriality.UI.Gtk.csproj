@@ -16,12 +16,18 @@
     <DebugSymbols>false</DebugSymbols>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <BundleGtkRuntime>false</BundleGtkRuntime>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GtkRuntimeSourceDir Condition="'$(GtkRuntimeSourceDir)' == '' and '$(OS)' == 'Windows_NT' and Exists('$(MSYS2_ROOT)\\mingw64\\bin\\libgtk-3-0.dll')">$(MSYS2_ROOT)\mingw64</GtkRuntimeSourceDir>
+    <GtkRuntimeSourceDir Condition="'$(GtkRuntimeSourceDir)' == '' and '$(OS)' == 'Windows_NT' and Exists('C:\\msys64\\mingw64\\bin\\libgtk-3-0.dll')">C:\msys64\mingw64</GtkRuntimeSourceDir>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Industriality.Backend\Industriality.Backend.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="GtkSharp" />
+    <PackageReference Include="GtkSharp.Dependencies" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
   <ItemGroup>
@@ -33,4 +39,105 @@
     <TrimmerRootAssembly Include="CairoSharp" />
     <TrimmerRootAssembly Include="AtkSharp" />
   </ItemGroup>
+
+  <Target Name="CopyGtkRuntimeToPublish"
+          AfterTargets="Publish"
+          Condition="'$(BundleGtkRuntime)' == 'true'">
+    <ItemGroup Condition="'$(GtkRuntimeSourceDir)' != '' and Exists('$(GtkRuntimeSourceDir)')">
+      <GtkRuntimeFiles Include="$(GtkRuntimeSourceDir)\**\*"
+                       Exclude="$(GtkRuntimeSourceDir)\bin\*.exe;
+                                $(GtkRuntimeSourceDir)\bin\*.py;
+                                $(GtkRuntimeSourceDir)\bin\*.sh;
+                                $(GtkRuntimeSourceDir)\bin\2to3*;
+                                $(GtkRuntimeSourceDir)\bin\bz*;
+                                $(GtkRuntimeSourceDir)\bin\idle*;
+                                $(GtkRuntimeSourceDir)\bin\pydoc*;
+                                $(GtkRuntimeSourceDir)\include\**\*;
+                                $(GtkRuntimeSourceDir)\lib\*.a;
+                                $(GtkRuntimeSourceDir)\lib\*.dll.a;
+                                $(GtkRuntimeSourceDir)\lib\*.la;
+                                $(GtkRuntimeSourceDir)\lib\cmake\**\*;
+                                $(GtkRuntimeSourceDir)\lib\dde*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\engines-*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\girepository-*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\itcl*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\pkgconfig\**\*;
+                                $(GtkRuntimeSourceDir)\lib\python*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\reg*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\sqlite*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\tcl*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\tdbc*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\terminfo\**\*;
+                                $(GtkRuntimeSourceDir)\lib\thread*\**\*;
+                                $(GtkRuntimeSourceDir)\lib\tk*\**\*;
+                                $(GtkRuntimeSourceDir)\share\aclocal\**\*;
+                                $(GtkRuntimeSourceDir)\share\applications\**\*;
+                                $(GtkRuntimeSourceDir)\share\bash-completion\**\*;
+                                $(GtkRuntimeSourceDir)\share\doc\**\*;
+                                $(GtkRuntimeSourceDir)\share\gdb\**\*;
+                                $(GtkRuntimeSourceDir)\share\gettext\**\*;
+                                $(GtkRuntimeSourceDir)\share\gir-1.0\**\*;
+                                $(GtkRuntimeSourceDir)\share\gtk-doc\**\*;
+                                $(GtkRuntimeSourceDir)\share\info\**\*;
+                                $(GtkRuntimeSourceDir)\share\licenses\**\*;
+                                $(GtkRuntimeSourceDir)\share\locale\**\*;
+                                $(GtkRuntimeSourceDir)\share\man\**\*;
+                                $(GtkRuntimeSourceDir)\share\pkgconfig\**\*;
+                                $(GtkRuntimeSourceDir)\share\sqlite\**\*;
+                                $(GtkRuntimeSourceDir)\share\tabset\**\*;
+                                $(GtkRuntimeSourceDir)\share\terminfo\**\*;
+                                $(GtkRuntimeSourceDir)\share\thumbnailers\**\*;
+                                $(GtkRuntimeSourceDir)\share\vala\**\*;
+                                $(GtkRuntimeSourceDir)\share\zoneinfo\**\*" />
+      <GtkRuntimeFiles Include="$(GtkRuntimeSourceDir)\bin\gspawn-win*-helper*.exe" />
+    </ItemGroup>
+
+    <Copy Condition="'@(GtkRuntimeFiles)' != ''"
+          SourceFiles="@(GtkRuntimeFiles)"
+          DestinationFiles="@(GtkRuntimeFiles->'$(PublishDir)gtk-runtime\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <Message Condition="'@(GtkRuntimeFiles)' != ''"
+             Importance="high"
+             Text="Bundled GTK runtime from '$(GtkRuntimeSourceDir)' into '$(PublishDir)gtk-runtime'." />
+
+    <Warning Condition="'@(GtkRuntimeFiles)' == ''"
+             Text="BundleGtkRuntime=true but GtkRuntimeSourceDir is missing or invalid. Set /p:GtkRuntimeSourceDir=&lt;path-to-gtk-runtime-root&gt;." />
+  </Target>
+
+  <Target Name="CopyGtkDependencyContentToPublish"
+          AfterTargets="Publish"
+          Condition="'$(BundleGtkRuntime)' != 'true' and $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win')) == 'true'">
+    <ItemGroup>
+      <GtkDependencyContent Include="$(TargetDir)bin\**\*"
+                            Condition="Exists('$(TargetDir)bin')" />
+      <GtkDependencyContent Include="$(TargetDir)etc\**\*"
+                            Condition="Exists('$(TargetDir)etc')" />
+      <GtkDependencyContent Include="$(TargetDir)lib\**\*"
+                            Condition="Exists('$(TargetDir)lib')" />
+      <GtkDependencyContent Include="$(TargetDir)share\**\*"
+                            Condition="Exists('$(TargetDir)share')" />
+    </ItemGroup>
+
+    <Copy Condition="'@(GtkDependencyContent)' != ''"
+          SourceFiles="@(GtkDependencyContent)"
+          DestinationFiles="@(GtkDependencyContent->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <Message Condition="'@(GtkDependencyContent)' != ''"
+             Importance="high"
+             Text="Copied GTK dependency content directories (bin/etc/lib/share) into publish output." />
+  </Target>
+
+  <Target Name="RemoveWindowsGtkDependencyContentFromNonWindowsPublish"
+          AfterTargets="Publish"
+          Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win')) != 'true'">
+    <ItemGroup>
+      <WindowsGtkDependencyFiles Include="$(PublishDir)bin\**\*;$(PublishDir)etc\**\*;$(PublishDir)lib\**\*;$(PublishDir)share\**\*;$(PublishDir)icons\**\*;$(PublishDir)themes\**\*;$(PublishDir)gtk-3.0\**\*;$(PublishDir)gdk-pixbuf-2.0\**\*;$(PublishDir)glib-2.0\**\*;$(PublishDir)*.dll" />
+      <WindowsGtkDependencyDirectories Include="$(PublishDir)bin;$(PublishDir)etc;$(PublishDir)lib;$(PublishDir)share;$(PublishDir)icons;$(PublishDir)themes;$(PublishDir)gtk-3.0;$(PublishDir)gdk-pixbuf-2.0;$(PublishDir)glib-2.0" />
+    </ItemGroup>
+
+    <Delete Files="@(WindowsGtkDependencyFiles)" TreatErrorsAsWarnings="true" />
+    <RemoveDir Directories="@(WindowsGtkDependencyDirectories)" />
+  </Target>
 </Project>

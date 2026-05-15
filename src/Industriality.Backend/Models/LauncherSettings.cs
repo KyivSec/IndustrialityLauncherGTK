@@ -6,7 +6,7 @@ namespace Industriality.Backend.Models;
 public sealed class LauncherSettings
 {
     public string MinecraftVersion { get; set; } = "1.21.1";
-    public string NeoForgeVersion { get; set; } = "21.1.219";
+    public string NeoForgeVersion { get; set; } = "21.1.220";
     public int JavaFeatureVersion { get; set; } = 25;
     public string PlayerName { get; set; } = "Player";
     public int MinRamMb { get; set; } = 512;

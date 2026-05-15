@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Industriality.Backend/Industriality.Backend.csproj" />
     <Project Path="src/Industriality.UI.Gtk/Industriality.UI.Gtk.csproj" />
+    <Project Path="src/Industriality.Installer/Industriality.Installer.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Industriality.Backend.Tests/Industriality.Backend.Tests.csproj" />

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Industriality.Installer</RootNamespace>
+    <AssemblyName>IndustrialityLauncherSetup</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('Payload\payload.zip')">
+    <EmbeddedResource Include="Payload\payload.zip" LogicalName="Industriality.Installer.payload.zip" />
+  </ItemGroup>
+  <ItemGroup Condition="Exists('Payload\payload.version')">
+    <EmbeddedResource Include="Payload\payload.version" LogicalName="Industriality.Installer.payload.version" />
+  </ItemGroup>
+</Project>

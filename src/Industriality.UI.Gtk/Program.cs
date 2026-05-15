@@ -4,6 +4,7 @@ using Industriality.Backend.Abstractions;
 using Industriality.Backend.Services;
 using Industriality.UI.Gtk.Actions;
 using Industriality.UI.Gtk.Abstractions;
+using Industriality.UI.Gtk.Runtime;
 using Industriality.UI.Gtk.Windows;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,7 @@ services.AddSingleton<MainWindow>();
 
 using var serviceProvider = services.BuildServiceProvider();
 
+GtkRuntimeBootstrap.ConfigureEnvironment();
 Application.Init();
 
 var mainWindow = serviceProvider.GetRequiredService<MainWindow>();
